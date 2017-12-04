@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:util="http://www.springframework.org/schema/util" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+	<description>Shiro</description>
+
+	<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <property name="realms" ref="myrealm">
+        </property>
+        <property name="cacheManager" ref="shiroEhcacheManager" />
+<!--         <property name="authenticator" ref="authenticator"></property>
+ -->        <!-- 注入session管理器 -->
+        <property name="sessionManager" ref="sessionManager" />
+        <!-- 记住我 -->
+        <property name="rememberMeManager" ref="rememberMeManager"/> 
+    </bean>
+    <!-- <bean id="authenticator" 
+    	class="org.apache.shiro.authc.pam.ModularRealmAuthenticator">
+    	<property name="authenticationStrategy">
+    		<bean class="org.apache.shiro.authc.pam.AtLeastOneSuccessfulStrategy"></bean>
+    	</property> 
+    </bean> -->
+    <bean id="sessionDAO" class="org.apache.shiro.session.mgt.eis.EnterpriseCacheSessionDAO"/>
+    <!--&lt;!&ndash; 会话管理器 &ndash;&gt;-->
+    <bean id="sessionManager" class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager">
+        <property name="sessionDAO" ref="sessionDAO"/>
+        <property name="globalSessionTimeout" value="3600000"></property>
+        <property name="sessionIdCookie" ref="cookieManager"/>
+    </bean>
+    <!--使用cookie支持chrome浏览器-->
+    <bean id="cookieManager" class="org.apache.shiro.web.servlet.SimpleCookie">
+        <property name="name" value="shirocookie"/>
+        <property name="path" value="/"/>
+    </bean>
+    <!--ehcache缓存  -->
+    <bean id="shiroEhcacheManager" class="org.apache.shiro.cache.ehcache.EhCacheManager">
+    <property name="cacheManagerConfigFile" value="classpath:ehcache-shiro.xml"/> 
+    </bean>
+    <bean id="myrealm" class="com.shiro.realm.Realm">
+     <!-- <property name="credentialsMatcher">
+        <bean class="org.apache.shiro.authc.credential.HashedCredentialsMatcher">
+            <property name="hashAlgorithmName" value="MD5"></property>
+            <property name="hashIterations" value="1024"></property>
+        </bean>
+    </property> -->
+    <property name="credentialsMatcher" ref="loginLimit"/>
+    </bean>
+    <bean id="loginLimit" class="com.shiro.realm.LimitLogin">
+            <property name="hashAlgorithmName" value="MD5"></property>
+            <property name="hashIterations" value="1024"></property>
+    </bean>
+    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
+    <!-- rememberMeManager管理器，写cookie，取出cookie生成用户信息 -->
+    <bean id="rememberMeManager" class="org.apache.shiro.web.mgt.CookieRememberMeManager">
+        <property name="cookie" ref="rememberMeCookie" />
+    </bean>
+    <!-- 记住我cookie -->
+    <bean id="rememberMeCookie" class="org.apache.shiro.web.servlet.SimpleCookie">
+        <!-- rememberMe是cookie的名字 -->
+        <constructor-arg value="rememberMe" />
+        <!-- 记住我cookie生效时间30天 -->
+        <property name="maxAge" value="2592000" />
+    </bean>
+     <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <property name="securityManager" ref="securityManager"/>
+        <property name="loginUrl" value="/login.jsp"/>
+        <property name="successUrl" value="/list.jsp"/>
+        <property name="unauthorizedUrl" value="/erro.jsp"/>                
+        <property name="filterChainDefinitions">
+            <value>
+                /login.jsp = anon
+                /user/login.do=anon
+                /list.jsp=roles[user]
+                /shiro/logout = logout
+                /** = authc
+            </value>
+        </property>
+    </bean>
+</beans>
