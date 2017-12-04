@@ -1,0 +1,15 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Getting Started: Serving Web Content</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+<p th:text="'Hello, ' + ${user.password} + '!'" />
+<form action="user/login" method="get">
+    name:<input type="text" name="name" value="${name}"><<br>>
+    password:<input type="password" name="password" value="${password}"><br>
+    <input type="submit" value="提交" >
+</form>
+</body>
+</html>
+
